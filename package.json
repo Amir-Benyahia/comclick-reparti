@@ -1,0 +1,26 @@
+{
+  "name": "comclick-reparti",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n serveur,vite -c green,cyan \"npm:server\" \"npm:client\"",
+    "server": "node --watch server/index.js",
+    "client": "vite --host",
+    "build": "vite build",
+    "simuler": "node scripts/simuler.js"
+  },
+  "dependencies": {
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.0",
+    "vite": "^7.1.0"
+  }
+}
