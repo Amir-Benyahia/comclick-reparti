@@ -1,5 +1,5 @@
 // La carte, utilisée par le serveur et par les écrans.
-// ingredients : ce que le client peut demander à retirer.
+// ingredients : ce que le client peut retirer depuis son téléphone.
 // cuissons : seulement pour les plats où on peut choisir la cuisson.
 export const CATEGORIES = ['Entrées', 'Plats', 'Desserts']
 
@@ -32,7 +32,7 @@ export function findDish(id) {
   return MENU.find((d) => d.id === id)
 }
 
-// Les régimes que le client peut indiquer.
+// Les régimes que le client peut cocher sur son téléphone.
 export const DIETS = ['Halal', 'Casher', 'Végétarien', 'Vegan', 'Sans gluten', 'Sans lactose']
 
 // Petit résumé d'une modification, par exemple "Saignant · sans Champignons".

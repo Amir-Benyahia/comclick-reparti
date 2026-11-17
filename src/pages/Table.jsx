@@ -1,11 +1,11 @@
 // La table tactile : espace de groupe.
 // Comme la v1 : une zone par client sur les bords, deux en haut et deux en bas.
 // Chaque client commande dans sa zone. Le centre sert à envoyer la commande en cuisine.
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { socket, useJoin, useMessage } from '../socket.js'
 import { MSG } from '../../shared/messages.js'
-import { canSend } from '../../shared/rules.js'
+import { canValidate, canSend } from '../../shared/rules.js'
 import ConnectionBadge from '../components/ConnectionBadge.jsx'
 import SeatZone from '../components/SeatZone.jsx'
 
@@ -13,9 +13,15 @@ export default function Table() {
   const tableId = Number(useParams().tableId)
   const connected = useJoin('table', tableId)
   const [table, setTable] = useState(null)
+  const [ip, setIp] = useState(location.hostname)
   const [justSent, setJustSent] = useState(false)
 
   useMessage(MSG.TABLE_STATE, setTable)
+
+  // On demande l'IP du PC au serveur pour que les QR marchent depuis un téléphone.
+  useEffect(() => {
+    fetch('/api/info').then((r) => r.json()).then((d) => setIp(d.ip)).catch(() => {})
+  }, [])
 
   if (!table?.open) {
     return (
@@ -33,6 +39,8 @@ export default function Table() {
     add: (seat, dishId) => socket.emit(MSG.ORDER_ADD, { tableId, seat, dishId }),
     remove: (seat, itemId) => socket.emit(MSG.ORDER_REMOVE, { tableId, seat, itemId }),
     validate: (seat, validated) => socket.emit(MSG.SEAT_VALIDATE, { tableId, seat, validated }),
+    edit: (seat, itemId) => socket.emit(MSG.EDIT_START, { tableId, seat, itemId }),
+    cancelEdit: (seat) => socket.emit(MSG.EDIT_CANCEL, { tableId, seat }),
   }
 
   function send() {
@@ -45,6 +53,8 @@ export default function Table() {
   const ready = canSend(table)
   const validated = table.clients.filter((c) => c.validated).length
 
+  // Un QR par place : il contient le numéro de place, donc le téléphone
+  // se lie directement à la zone qui est devant le client.
   const zone = (seat, flipped) => (
     <SeatZone
       seat={seat}
@@ -52,6 +62,8 @@ export default function Table() {
       items={table.items.filter((i) => i.seat === seat)}
       flipped={flipped}
       roundOpen={roundOpen}
+      canValidate={canValidate(table, seat)}
+      qrUrl={`http://${ip}:${location.port}/m/${tableId}/${seat}`}
       actions={actions}
     />
   )

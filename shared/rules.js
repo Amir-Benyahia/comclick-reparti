@@ -1,9 +1,21 @@
 // Les règles communes au serveur et à la table.
 
-// La commande peut partir en cuisine quand tous les clients assis ont validé
-// et qu'il y a au moins un plat choisi.
+// Une demande de modification attend la réponse de la cuisine.
+export function isPending(item) {
+  return item.request?.status === 'en_attente'
+}
+
+// Un client peut valider s'il n'a aucune demande en attente.
+export function canValidate(table, seat) {
+  return !table.items.some((i) => i.seat === seat && isPending(i))
+}
+
+// La commande peut partir en cuisine quand tous les clients assis ont validé,
+// qu'il y a au moins un plat choisi et qu'aucune demande n'attend la cuisine.
 export function canSend(table) {
   return table.clients.length > 0
     && table.clients.every((c) => c.validated)
     && table.items.some((i) => i.status === 'choisi')
+    && !table.items.some(isPending)
 }
+

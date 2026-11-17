@@ -2,6 +2,7 @@
 // Les écrans réception, cuisine et serveur sont codés par les autres membres du groupe.
 import { Routes, Route, Link } from 'react-router-dom'
 import Table from './pages/Table.jsx'
+import Mobile from './pages/Mobile.jsx'
 
 function Home() {
   return (
@@ -11,6 +12,7 @@ function Home() {
       <ul className="links">
         <li><Link to="/table/1">Table 1</Link></li>
         <li><Link to="/table/2">Table 2</Link></li>
+        <li><Link to="/m/1/1">Téléphone à table (table 1, place 1)</Link></li>
       </ul>
     </div>
   )
@@ -21,6 +23,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/table/:tableId" element={<Table />} />
+      <Route path="/m/:tableId/:seat" element={<Mobile />} />
     </Routes>
   )
 }
