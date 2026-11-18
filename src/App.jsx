@@ -3,6 +3,7 @@
 import { Routes, Route, Link } from 'react-router-dom'
 import Table from './pages/Table.jsx'
 import Mobile from './pages/Mobile.jsx'
+import Cuisine from './pages/Cuisine.jsx'
 
 function Home() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/cuisine" element={<Cuisine />} />
       <Route path="/table/:tableId" element={<Table />} />
       <Route path="/m/:tableId/:seat" element={<Mobile />} />
     </Routes>
