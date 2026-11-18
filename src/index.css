@@ -128,3 +128,34 @@ button.start { font-size: 1.05rem; padding: 14px 24px; border-radius: 30px; }
 button.send { font-size: 1.1rem; padding: 14px 28px; border-radius: 40px; animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.5); } 50% { box-shadow: 0 0 0 14px rgba(201, 162, 39, 0); } }
 .sent-msg { color: var(--green); font-weight: 700; font-size: 1.1rem; }
+
+/* ---------- Cuisine ---------- */
+/* Étape 1 : affichage des bons, sans action sur les commandes. */
+.cuisine-page { max-width: 1180px; padding-top: 32px; }
+.cuisine-page .badge { top: 24px; right: 20px; }
+.cuisine-header { margin-bottom: 28px; padding-right: 140px; }
+.cuisine-logo { color: #c6ab80; letter-spacing: 0.3em; font-weight: 600; font-size: 1.1rem; }
+.cuisine-header .small { margin: 6px 0 14px; letter-spacing: 0.08em; }
+.cuisine-header h1 { font-size: 1.8rem; font-weight: 500; margin-bottom: 8px; }
+.cuisine-tickets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 18px; }
+.cuisine-ticket { border: 1px solid #484238; padding: 0; background: #252420; overflow: hidden; }
+.cuisine-ticket-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; background: #33312b; padding: 18px; }
+.cuisine-ticket-head h2 { font-size: 1.55rem; font-weight: 500; color: var(--text); margin: 5px 0 0; }
+.cuisine-eyebrow { font-size: 0.72rem; letter-spacing: 0.13em; color: #c3b394; }
+.cuisine-list { padding: 0 18px; }
+.cuisine-list li.cuisine-dish { display: flex; justify-content: flex-start; align-items: flex-start; padding: 18px 0; gap: 14px; }
+.cuisine-list li:last-child { border-bottom: 0; }
+.cuisine-seat { flex: 0 0 30px; color: #c3b394; font-weight: 600; padding-top: 1px; }
+.cuisine-dish-body { flex: 1; min-width: 0; }
+.cuisine-dish-line { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.cuisine-dish-line strong { font-weight: 550; line-height: 1.35; }
+.cuisine-detail, .cuisine-allergy, .cuisine-request { margin: 7px 0 0; font-size: 0.88rem; line-height: 1.4; }
+.cuisine-detail { color: #b8afa2; }
+.cuisine-allergy { color: #edbbac; }
+.cuisine-request { color: #d7b781; border-left: 2px solid #c1a276; padding-left: 9px; }
+.cuisine-empty { border: 1px solid #484238; background: #252420; }
+@media (max-width: 600px) {
+  .cuisine-page { padding-top: 22px; }
+  .cuisine-header { padding-right: 0; padding-top: 34px; }
+  .cuisine-ticket-head { align-items: flex-start; }
+}
