@@ -3,6 +3,7 @@
 import { Routes, Route, Link } from 'react-router-dom'
 import Table from './pages/Table.jsx'
 import Mobile from './pages/Mobile.jsx'
+import Reception from './pages/Reception.jsx'
 
 function Home() {
   return (
@@ -13,6 +14,7 @@ function Home() {
         <li><Link to="/table/1">Table 1</Link></li>
         <li><Link to="/table/2">Table 2</Link></li>
         <li><Link to="/m/1/1">Téléphone à table (table 1, place 1)</Link></li>
+        <li><Link to="/reception">Réception</Link></li>
       </ul>
     </div>
   )
@@ -22,6 +24,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/reception" element={<Reception />} />
       <Route path="/table/:tableId" element={<Table />} />
       <Route path="/m/:tableId/:seat" element={<Mobile />} />
     </Routes>

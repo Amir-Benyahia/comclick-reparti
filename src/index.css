@@ -128,3 +128,53 @@ button.start { font-size: 1.05rem; padding: 14px 24px; border-radius: 30px; }
 button.send { font-size: 1.1rem; padding: 14px 28px; border-radius: 40px; animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.5); } 50% { box-shadow: 0 0 0 14px rgba(201, 162, 39, 0); } }
 .sent-msg { color: var(--green); font-weight: 700; font-size: 1.1rem; }
+
+
+/* ---------- Réception ---------- */
+.rx-page { max-width: 1200px; padding-top: 28px; }
+.rx-page .badge { top: 24px; right: 20px; }
+
+.rx-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-right: 150px; flex-wrap: wrap; gap: 16px; }
+.rx-brand { display: flex; flex-direction: column; }
+.rx-logo { color: var(--gold); letter-spacing: 0.3em; font-weight: 600; font-size: 1.1rem; }
+.rx-subtitle { margin: 4px 0 0; }
+
+.rx-kpis { display: flex; gap: 28px; align-items: center; }
+.rx-kpi { display: flex; flex-direction: column; align-items: center; }
+.rx-kpi-val { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+.rx-kpi-lbl { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-top: 2px; }
+
+.rx-toast { padding: 10px 18px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; text-align: center; margin-bottom: 12px; }
+.rx-toast-ok  { background: rgba(76, 175, 122, 0.12); border: 1px solid var(--green); color: var(--green); }
+.rx-toast-error { background: rgba(217, 83, 79, 0.12); border: 1px solid var(--red); color: var(--red); }
+
+.rx-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.rx-toolbar-right { display: flex; align-items: center; gap: 8px; }
+
+.rx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 16px; }
+
+.rx-table-card { display: flex; flex-direction: column; cursor: default; transition: border-color 0.2s; }
+.rx-table-card.rx-status-fermee { opacity: 0.65; }
+.rx-table-card.rx-selected-link { border: 2px solid var(--gold) !important; background: rgba(201, 162, 39, 0.06); }
+
+.rx-table-top { display: flex; justify-content: space-between; align-items: center; }
+.rx-table-num { font-size: 1.15rem; }
+.rx-table-info { margin: 10px 0 0; min-height: 32px; }
+.rx-table-actions { margin-top: 4px; }
+
+.rx-status-pill { font-size: 0.72rem; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+.rx-status-libre  { border-color: rgba(76, 175, 122, 0.3); }
+.rx-status-occupee { border-color: rgba(201, 162, 39, 0.4); }
+.rx-status-fermee { border-color: rgba(163, 151, 136, 0.3); }
+.rx-status-pill.rx-status-libre  { background: rgba(76, 175, 122, 0.12); color: var(--green); }
+.rx-status-pill.rx-status-occupee { background: rgba(201, 162, 39, 0.15); color: var(--gold); }
+.rx-status-pill.rx-status-fermee { background: rgba(163, 151, 136, 0.12); color: var(--muted); }
+
+.rx-empty { text-align: center; padding: 48px 24px; }
+
+@media (max-width: 600px) {
+  .rx-header { padding-right: 0; padding-top: 36px; }
+  .rx-kpis { gap: 16px; }
+  .rx-kpi-val { font-size: 1.3rem; }
+  .rx-toolbar { flex-direction: column; align-items: flex-start; }
+}
