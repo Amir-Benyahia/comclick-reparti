@@ -31,7 +31,7 @@ export default function SeatZone({ seat, client, items, flipped, roundOpen, canV
       <div className="zone-head">
         <div className="zone-title">Place {seat}</div>
         {linked
-          ? <span className="chip">Téléphone lié</span>
+          ? <span className="chip">{client.paid ? 'Payé ✓' : 'Téléphone lié'}</span>
           : (
             <div className="link-phone">
               <span>Scannez pour vos régimes<br />et modifier un plat</span>

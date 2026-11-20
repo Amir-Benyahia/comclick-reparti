@@ -19,3 +19,19 @@ export function canSend(table) {
     && !table.items.some(isPending)
 }
 
+// Même règle pour un groupe de tables couplées : tout le groupe doit être prêt.
+export function canSendGroup(group) {
+  const clients = group.flatMap((t) => t.clients)
+  const items = group.flatMap((t) => t.items)
+  return clients.length > 0
+    && clients.every((c) => c.validated)
+    && items.some((i) => i.status === 'choisi')
+    && !items.some(isPending)
+}
+
+// Ce que doit un client : ses plats déjà envoyés en cuisine.
+export function billOf(table, seat, priceOf) {
+  return table.items
+    .filter((i) => i.seat === seat && i.status !== 'choisi')
+    .reduce((sum, i) => sum + priceOf(i.dishId), 0)
+}

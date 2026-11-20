@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom'
 import { socket, useJoin, useMessage } from '../socket.js'
 import { MSG } from '../../shared/messages.js'
 import { findDish, modsSummary, DIETS } from '../../shared/menu.js'
-import { isPending } from '../../shared/rules.js'
+import { isPending, billOf } from '../../shared/rules.js'
 import ConnectionBadge from '../components/ConnectionBadge.jsx'
 import ItemStatus from '../components/ItemStatus.jsx'
 import RequestStatus from '../components/RequestStatus.jsx'
@@ -104,6 +104,14 @@ export default function Mobile() {
               : <button className="wide" disabled={dietSaved} onClick={saveDiet}>Envoyer à la cuisine</button>}
           </section>
 
+          {myItems.some((i) => i.status !== 'choisi') && (
+            <Bill table={table} seat={seat} me={me} onPay={(scope) => socket.emit(MSG.PAY, { tableId, clientId, scope })} />
+          )}
+
+          {me?.paid && (
+            <Review onSend={(stars, comment) => socket.emit(MSG.REVIEW_ADD, { tableId, clientId, stars, comment })} />
+          )}
+
           <section className="card">
             <h2>Mes plats</h2>
             {myItems.length === 0 && <p className="muted">Choisissez vos plats dans votre zone sur la table.</p>}
@@ -178,6 +186,67 @@ function DishEditor({ item, onSend, onCancel }) {
       <p className="muted small">La cuisine a une minute pour dire si c'est possible.</p>
       <button className="wide" disabled={!changed} onClick={() => onSend(mods)}>Envoyer la demande en cuisine</button>
       <button className="wide ghost" onClick={onCancel}>Annuler</button>
+    </section>
+  )
+}
+
+// L'addition. Le paiement est simulé : aucune donnée bancaire n'est demandée.
+function Bill({ table, seat, me, onPay }) {
+  const priceOf = (id) => findDish(id).price
+  const mine = billOf(table, seat, priceOf)
+  const all = table.clients.reduce((sum, c) => sum + billOf(table, c.seat, priceOf), 0)
+  const [confirming, setConfirming] = useState(null)
+
+  if (me?.paid) {
+    return (
+      <section className="card">
+        <h2>L'addition</h2>
+        <p className="ok-text">Payé ✓ Merci !</p>
+      </section>
+    )
+  }
+
+  return (
+    <section className="card">
+      <h2>L'addition</h2>
+      <div className="item-line"><span>Ma part</span><strong>{mine} €</strong></div>
+      <div className="item-line muted"><span>Toute la table</span><span>{all} €</span></div>
+      {!confirming && (
+        <>
+          <button className="wide" onClick={() => setConfirming('moi')}>Payer ma part · {mine} €</button>
+          <button className="wide ghost" onClick={() => setConfirming('table')}>Payer pour toute la table · {all} €</button>
+        </>
+      )}
+      {confirming && (
+        <div className="pay-confirm">
+          <p>Paiement simulé de <strong>{confirming === 'moi' ? mine : all} €</strong> pour le prototype.</p>
+          <button className="wide" onClick={() => onPay(confirming)}>Confirmer le paiement</button>
+          <button className="wide ghost" onClick={() => setConfirming(null)}>Retour</button>
+        </div>
+      )}
+    </section>
+  )
+}
+
+// L'avis après le repas, visible par la réception.
+function Review({ onSend }) {
+  const [stars, setStars] = useState(0)
+  const [comment, setComment] = useState('')
+  const [sent, setSent] = useState(false)
+
+  if (sent) {
+    return <section className="card"><p className="ok-text">Merci pour votre avis !</p></section>
+  }
+  return (
+    <section className="card">
+      <h2>Votre avis</h2>
+      <div className="stars">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button key={n} className={'star' + (n <= stars ? ' on' : '')} onClick={() => setStars(n)}>★</button>
+        ))}
+      </div>
+      <label className="field">Un mot pour l'équipe<input value={comment} placeholder="Facultatif" onChange={(e) => setComment(e.target.value)} /></label>
+      <button className="wide" disabled={stars === 0} onClick={() => { onSend(stars, comment); setSent(true) }}>Envoyer mon avis</button>
     </section>
   )
 }

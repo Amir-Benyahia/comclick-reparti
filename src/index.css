@@ -128,3 +128,57 @@ button.start { font-size: 1.05rem; padding: 14px 24px; border-radius: 30px; }
 button.send { font-size: 1.1rem; padding: 14px 28px; border-radius: 40px; animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.5); } 50% { box-shadow: 0 0 0 14px rgba(201, 162, 39, 0); } }
 .sent-msg { color: var(--green); font-weight: 700; font-size: 1.1rem; }
+
+/* ---------- Appli téléphone (réservation, menus) ---------- */
+.app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+.app-head { display: flex; justify-content: space-between; align-items: center; padding: 16px; }
+.app-head .badge { position: static; }
+.app-logo { letter-spacing: 0.3em; color: var(--gold); font-weight: 700; }
+.app-main { flex: 1; padding: 0 16px 90px; }
+.app-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px;
+  display: grid; grid-template-columns: repeat(3, 1fr); background: #1a1613; border-top: 1px solid var(--line); }
+.app-nav button { background: transparent; color: var(--muted); border-radius: 0; padding: 16px 4px; font-size: 0.85rem; }
+.app-nav button.active { color: var(--gold); box-shadow: inset 0 2px 0 var(--gold); }
+h3.first { margin-top: 0; }
+.stepper { display: flex; align-items: center; gap: 20px; }
+.stepper span { font-size: 1.6rem; font-weight: 700; min-width: 30px; text-align: center; }
+.stepper button { width: 46px; height: 46px; padding: 0; font-size: 1.4rem; border-radius: 50%; }
+.days { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.day { flex-shrink: 0; background: transparent; color: var(--text); border: 1px solid #4a4038; border-radius: 10px;
+  padding: 10px 12px; font-weight: 500; text-transform: capitalize; }
+.day.on, .slot.on { background: var(--gold); color: #000; border-color: var(--gold); }
+.service { margin-bottom: 12px; }
+.slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; }
+.slot { background: transparent; color: var(--text); border: 1px solid #4a4038; padding: 10px 0; }
+.slot:disabled { text-decoration: line-through; }
+button.sticky { position: sticky; bottom: 70px; }
+button.link { background: none; color: var(--gold); padding: 0; margin-bottom: 10px; font-weight: 500; }
+.center-text { text-align: center; }
+.big-check { width: 64px; height: 64px; border-radius: 50%; background: var(--green); color: #000;
+  font-size: 2rem; display: grid; place-items: center; margin: 6px auto 12px; }
+.wide-tabs { margin-bottom: 12px; }
+.wide-tabs .tab { flex: 1; }
+.chef-menu h2 { font-size: 1.4rem; color: var(--text); }
+.course { display: flex; flex-direction: column; margin: 12px 0; }
+.course span { font-size: 0.75rem; color: var(--gold); text-transform: uppercase; letter-spacing: 0.06em; }
+.price { font-weight: 700; color: var(--gold); }
+.faded { opacity: 0.5; }
+
+/* ---------- Ajouts : tables couplées, rappels, addition, avis ---------- */
+.linked { color: var(--gold); font-weight: 600; }
+.ok-inline { color: var(--green); }
+.gold { color: var(--gold); }
+.notice-card { background: #2a241c; border: 1px solid var(--gold); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
+.notice-card.good { background: #1d3a2a; border-color: var(--green); }
+.notice-card p { margin: 6px 0 10px; }
+.row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.row-btns button { flex: 1; }
+.invite { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 4px; }
+.invite-qr { text-align: center; margin-top: 12px; }
+.invite-qr p { word-break: break-all; }
+.tag-wait { display: inline-block; background: #3a2f1a; color: var(--gold); padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; margin: 0 0 8px; }
+.slot.full { border-style: dashed; color: var(--gold); text-decoration: none; }
+.pay-confirm { margin-top: 10px; }
+.stars { display: flex; gap: 6px; }
+.star { background: none; color: #4a4038; font-size: 2rem; padding: 0 4px; }
+.star.on { color: var(--gold); }

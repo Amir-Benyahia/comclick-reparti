@@ -3,6 +3,8 @@
 import { Routes, Route, Link } from 'react-router-dom'
 import Table from './pages/Table.jsx'
 import Mobile from './pages/Mobile.jsx'
+import AppHome from './pages/app/AppHome.jsx'
+import Invite from './pages/app/Invite.jsx'
 
 function Home() {
   return (
@@ -13,6 +15,7 @@ function Home() {
         <li><Link to="/table/1">Table 1</Link></li>
         <li><Link to="/table/2">Table 2</Link></li>
         <li><Link to="/m/1/1">Téléphone à table (table 1, place 1)</Link></li>
+        <li><Link to="/app">Appli téléphone : réserver et menus</Link></li>
       </ul>
     </div>
   )
@@ -24,6 +27,8 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/table/:tableId" element={<Table />} />
       <Route path="/m/:tableId/:seat" element={<Mobile />} />
+      <Route path="/app" element={<AppHome />} />
+      <Route path="/app/invite/:code" element={<Invite />} />
     </Routes>
   )
 }

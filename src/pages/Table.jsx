@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { socket, useJoin, useMessage } from '../socket.js'
 import { MSG } from '../../shared/messages.js'
-import { canValidate, canSend } from '../../shared/rules.js'
+import { canValidate } from '../../shared/rules.js'
 import ConnectionBadge from '../components/ConnectionBadge.jsx'
 import SeatZone from '../components/SeatZone.jsx'
 
@@ -49,9 +49,9 @@ export default function Table() {
     setTimeout(() => setJustSent(false), 3000)
   }
 
-  const roundOpen = table.items.some((i) => i.status === 'choisi')
-  const ready = canSend(table)
-  const validated = table.clients.filter((c) => c.validated).length
+  // Si la table est couplée, le compteur et le bouton valent pour les deux tables.
+  const { roundOpen, ready, validated, clients, paid, tableIds } = table.group
+  const linked = tableIds.length > 1
 
   // Un QR par place : il contient le numéro de place, donc le téléphone
   // se lie directement à la zone qui est devant le client.
@@ -74,7 +74,7 @@ export default function Table() {
 
       <div className="center">
         <div className="muted">
-          Table {tableId}
+          {linked ? <span className="linked">Tables {tableIds.join(' + ')} couplées</span> : `Table ${tableId}`}
         </div>
         <div className="center-action">
           {justSent && <div className="sent-msg">Commande envoyée en cuisine</div>}
@@ -82,9 +82,14 @@ export default function Table() {
             <button className="send" onClick={send}>Envoyer la commande en cuisine</button>
           )}
           {!justSent && !ready && roundOpen && (
-            <p className="muted">{validated} / {table.clients.length} client(s) ont validé</p>
+            <p className="muted">{validated} / {clients} client(s) ont validé{linked ? ' sur les deux tables' : ''}</p>
           )}
-          {!justSent && !roundOpen && <p className="muted">Bienvenue, touchez votre zone pour commander</p>}
+          {!justSent && !roundOpen && paid > 0 && (
+            <p className={paid === clients ? 'sent-msg' : 'muted'}>
+              {paid === clients ? 'Addition réglée, merci !' : `Addition : ${paid} / ${clients} ont payé`}
+            </p>
+          )}
+          {!justSent && !roundOpen && paid === 0 && <p className="muted">Bienvenue, touchez votre zone pour commander</p>}
         </div>
         <div className="center-logo">
           COMCLICK

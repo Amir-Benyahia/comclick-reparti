@@ -5,24 +5,34 @@ import { networkInterfaces } from 'node:os'
 import { Server } from 'socket.io'
 import { findDish } from '../shared/menu.js'
 import { MSG, EDIT_DELAY_MS } from '../shared/messages.js'
-import { canSend, canValidate, isPending } from '../shared/rules.js'
+import { canSendGroup, canValidate, isPending } from '../shared/rules.js'
+import * as resas from './reservations.js'
 
 const PORT = 3001
 const SEATS = 4
 
 // ---------- L'état ----------
-// Une table : { id, open, clients, items }
-// Un client : { seat, validated, clientId (téléphone lié ou null), diets, allergies, editing }
+// Une table : { id, open, clients, items, linked, announced }
+//   linked    : la table couplée avec elle pour un groupe de 5 à 8, ou null
+//   announced : les régimes donnés à la réservation (privé, pour la cuisine)
+// Un client : { seat, validated, clientId (téléphone lié ou null), diets, allergies, editing, paid }
 // Un plat :   { id, dishId, seat, status, mods, request }
 //   status  : choisi -> envoye -> pret -> servi
 //   request : la demande de modification { mods, status, deadline }
 //             status : en_attente, acceptee, refusee, expiree
 const tables = {}
 function emptyTable(id, open = false) {
-  return { id, open, clients: [], items: [] }
+  return { id, open, clients: [], items: [], linked: null, announced: [] }
 }
 for (let id = 1; id <= 6; id++) tables[id] = emptyTable(id)
+resas.seed()
 
+const reviews = []
+
+// La table et celle qui lui est couplée.
+function groupOf(table) {
+  return [table, tables[table.linked]].filter(Boolean)
+}
 
 // ---------- Petit serveur HTTP ----------
 // /api/info donne l'adresse IP du PC, pour que la table fabrique des QR codes
@@ -42,18 +52,41 @@ const io = new Server(http, { cors: { origin: '*' } })
 // ---------- Envoi de l'état ----------
 // La table et les téléphones reçoivent leur table, sans les régimes ni les allergies :
 // ce sont des données privées, seule la cuisine les voit.
+// Ils reçoivent aussi un résumé du groupe quand deux tables sont couplées.
 // Le personnel reçoit tout.
 function publicTable(table) {
+  const group = groupOf(table)
+  const clients = group.flatMap((t) => t.clients)
   return {
     ...table,
+    announced: undefined,
     clients: table.clients.map(({ diets, allergies, ...rest }) => rest),
+    group: {
+      tableIds: group.map((t) => t.id),
+      clients: clients.length,
+      validated: clients.filter((c) => c.validated).length,
+      paid: clients.filter((c) => c.paid).length,
+      roundOpen: group.some((t) => t.items.some((i) => i.status === 'choisi')),
+      ready: canSendGroup(group),
+    },
   }
 }
 
-// Envoie une table à tous ceux qui la regardent.
+// Envoie une table (et sa table couplée) à tous ceux qui la regardent.
 function sendTable(tableId) {
-  io.to('table:' + tableId).emit(MSG.TABLE_STATE, publicTable(tables[tableId]))
+  for (const t of groupOf(tables[tableId])) {
+    io.to('table:' + t.id).emit(MSG.TABLE_STATE, publicTable(t))
+  }
   io.to('staff').emit(MSG.ALL_STATE, Object.values(tables))
+}
+
+function sendReservations() {
+  io.to('reception').emit(MSG.RESA_LIST, { reservations: resas.reservations, waitlist: resas.waitlist, reviews })
+}
+
+// L'appli d'un téléphone reçoit ses réservations et sa liste d'attente dès qu'elles changent.
+function sendDevice(deviceId) {
+  if (deviceId) io.to('app:' + deviceId).emit(MSG.DEVICE_STATE, resas.forDevice(deviceId))
 }
 
 function getClient(table, seat) {
@@ -64,22 +97,37 @@ function getClient(table, seat) {
 function openSeat(table, seat) {
   let client = getClient(table, seat)
   if (!client) {
-    client = { seat, validated: false, clientId: null, diets: [], allergies: '', editing: null }
+    client = { seat, validated: false, clientId: null, diets: [], allergies: '', editing: null, paid: false }
     table.clients.push(client)
   }
   return client
 }
 
+function unlink(table) {
+  const other = tables[table.linked]
+  if (other) other.linked = null
+  table.linked = null
+  return other
+}
+
 // ---------- Connexions ----------
 io.on('connection', (socket) => {
-  socket.on(MSG.JOIN, ({ role, tableId }) => {
+  socket.on(MSG.JOIN, ({ role, tableId, deviceId }) => {
     if (role === 'table' || role === 'mobile') {
       socket.join('table:' + tableId)
       socket.emit(MSG.TABLE_STATE, publicTable(tables[tableId]))
+    } else if (role === 'invite') {
+      // Un invité qui ouvre le lien partagé : il pose juste des questions.
+    } else if (role === 'app') {
+      // L'appli téléphone hors du restaurant : chaque téléphone a son salon.
+      socket.data.deviceId = deviceId
+      socket.join('app:' + deviceId)
+      sendDevice(deviceId)
     } else {
       socket.join('staff')
       socket.join(role)
       socket.emit(MSG.ALL_STATE, Object.values(tables))
+      if (role === 'reception') socket.emit(MSG.RESA_LIST, { reservations: resas.reservations, waitlist: resas.waitlist, reviews })
     }
     console.log(`[join] ${role}${tableId ? ' table ' + tableId : ''}`)
   })
@@ -93,8 +141,136 @@ io.on('connection', (socket) => {
 
   socket.on(MSG.TABLE_CLOSE, ({ tableId }) => {
     if (!tables[tableId]) return
+    const other = unlink(tables[tableId])
     tables[tableId] = emptyTable(tableId)
     sendTable(tableId)
+    if (other) sendTable(other.id)
+  })
+
+  // Deux tables de 4 couplées pour un groupe de 5 à 8 : une seule commande, un seul envoi.
+  socket.on(MSG.TABLE_LINK, ({ tableId, otherId }) => {
+    const a = tables[tableId]
+    const b = tables[otherId]
+    if (!a?.open || !b?.open || a === b || a.linked || b.linked) return
+    a.linked = b.id
+    b.linked = a.id
+    sendTable(a.id)
+  })
+
+  socket.on(MSG.TABLE_UNLINK, ({ tableId }) => {
+    const table = tables[tableId]
+    if (!table?.linked) return
+    const other = unlink(table)
+    sendTable(table.id)
+    sendTable(other.id)
+  })
+
+  // Quand une réservation arrive, la réception choisit sa ou ses tables.
+  socket.on(MSG.RESA_ASSIGN, ({ id, tableIds }, reply) => {
+    const res = resas.assign(id, tableIds ?? [])
+    reply?.({ error: res.error })
+    if (res.resa) {
+      sendReservations()
+      sendDevice(res.resa.deviceId)
+    }
+  })
+
+  // A l'arrivée du groupe, la réception l'installe sur les tables attribuées.
+  // Avec deux tables, elles sont couplées.
+  socket.on(MSG.RESA_SEAT, ({ id }) => {
+    const resa = resas.find(id)
+    if (!resa || resa.tableIds.length === 0) return
+    if (resa.tableIds.some((tid) => tables[tid].open)) return
+    if (!resas.seat(id)) return
+    const ids = resa.tableIds
+
+    // Les régimes annoncés à la réservation partent en cuisine avec la table.
+    const announced = [
+      { name: resa.name, diets: resa.diets, allergies: '' },
+      ...resa.guestList,
+    ].filter((g) => g.diets.length > 0 || g.allergies)
+    for (const tid of ids) {
+      tables[tid] = emptyTable(tid, true)
+      tables[tid].announced = announced
+    }
+    if (ids.length === 2) {
+      tables[ids[0]].linked = ids[1]
+      tables[ids[1]].linked = ids[0]
+    }
+    sendTable(ids[0])
+    sendReservations()
+    sendDevice(resa.deviceId)
+  })
+
+  // ----- Appli téléphone : réservations -----
+  socket.on(MSG.RESA_AVAILABILITY, ({ date, guests }, reply) => {
+    reply({ services: resas.availability(date, Number(guests)) })
+  })
+
+  socket.on(MSG.RESA_CREATE, (data, reply) => {
+    const res = resas.create(data, socket.data.deviceId)
+    reply(res)
+    if (res.resa) {
+      sendReservations()
+      sendDevice(socket.data.deviceId)
+    }
+  })
+
+  // Une annulation libère peut-être un créneau : on prévient la liste d'attente.
+  socket.on(MSG.RESA_CANCEL, ({ id }) => {
+    const resa = resas.cancel(id)
+    if (!resa) return
+    sendDevice(resa.deviceId)
+    for (const w of resas.checkWaitlist(resa.date)) sendDevice(w.deviceId)
+    sendReservations()
+  })
+
+  // Le rappel de la veille : le client confirme qu'il vient.
+  socket.on(MSG.RESA_CONFIRM, ({ id }) => {
+    const resa = resas.confirm(id)
+    if (!resa) return
+    sendDevice(resa.deviceId)
+    sendReservations()
+  })
+
+  // Le lien partagé aux invités.
+  socket.on(MSG.RESA_INVITE_INFO, ({ code }, reply) => {
+    reply(resas.inviteInfo(code))
+  })
+
+  socket.on(MSG.RESA_GUEST_ADD, (data, reply) => {
+    const res = resas.addGuest(data.code, data)
+    reply({ error: res.error })
+    if (res.resa) {
+      sendDevice(res.resa.deviceId)
+      sendReservations()
+    }
+  })
+
+  // La liste d'attente.
+  socket.on(MSG.WAIT_JOIN, (data, reply) => {
+    const res = resas.joinWaitlist(data, socket.data.deviceId)
+    reply(res)
+    if (res.entry) {
+      sendDevice(socket.data.deviceId)
+      sendReservations()
+    }
+  })
+
+  socket.on(MSG.WAIT_ACCEPT, ({ id }, reply) => {
+    const res = resas.acceptWait(id)
+    reply?.(res)
+    sendDevice(socket.data.deviceId)
+    sendReservations()
+  })
+
+  socket.on(MSG.WAIT_DECLINE, ({ id }) => {
+    const w = resas.declineWait(id)
+    if (!w) return
+    sendDevice(w.deviceId)
+    // la place revient au suivant
+    for (const next of resas.checkWaitlist(w.date)) sendDevice(next.deviceId)
+    sendReservations()
   })
 
   // ----- Table : la commande se fait dans la zone de chaque client -----
@@ -134,17 +310,20 @@ io.on('connection', (socket) => {
     sendTable(tableId)
   })
 
-  // Le bouton du centre : il n'apparaît que quand tout le monde a validé.
+  // Le bouton du centre : pour des tables couplées, il envoie la commande des deux tables.
   socket.on(MSG.ORDER_SEND, ({ tableId }) => {
     const table = tables[tableId]
     if (!table) return
-    if (!canSend(table)) return
-    for (const item of table.items) {
-      if (item.status === 'choisi') item.status = 'envoye'
-    }
-    for (const client of table.clients) {
-      client.validated = false
-      client.editing = null
+    const group = groupOf(table)
+    if (!canSendGroup(group)) return
+    for (const t of group) {
+      for (const item of t.items) {
+        if (item.status === 'choisi') item.status = 'envoye'
+      }
+      for (const client of t.clients) {
+        client.validated = false
+        client.editing = null
+      }
     }
     sendTable(tableId)
   })
@@ -211,6 +390,24 @@ io.on('connection', (socket) => {
         sendTable(tableId)
       }
     }, EDIT_DELAY_MS)
+  })
+
+  // L'addition : chacun paie sa part, ou une personne paie pour toute la table.
+  // Le paiement est simulé, aucune donnée bancaire n'est demandée.
+  socket.on(MSG.PAY, ({ tableId, clientId, scope }) => {
+    const table = tables[tableId]
+    const client = table?.clients.find((c) => c.clientId === clientId)
+    if (!client) return
+    const payers = scope === 'table' ? groupOf(table).flatMap((t) => t.clients) : [client]
+    for (const c of payers) c.paid = true
+    sendTable(tableId)
+  })
+
+  socket.on(MSG.REVIEW_ADD, ({ tableId, clientId, stars, comment }) => {
+    const client = tables[tableId]?.clients.find((c) => c.clientId === clientId)
+    if (!client || !(stars >= 1 && stars <= 5)) return
+    reviews.unshift({ tableId, stars, comment: (comment ?? '').slice(0, 300), at: Date.now() })
+    sendReservations()
   })
 
   // ----- Cuisine -----

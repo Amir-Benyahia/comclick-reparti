@@ -9,13 +9,13 @@ export const socket = io()
 // À appeler au début de chaque page.
 // Elle se présente au serveur, et recommence après chaque reconnexion.
 // Elle renvoie true ou false selon que le serveur répond.
-export function useJoin(role, tableId) {
+export function useJoin(role, tableId, deviceId) {
   const [connected, setConnected] = useState(socket.connected)
 
   useEffect(() => {
     const join = () => {
       setConnected(true)
-      socket.emit(MSG.JOIN, { role, tableId })
+      socket.emit(MSG.JOIN, { role, tableId, deviceId })
     }
     const lost = () => setConnected(false)
 
@@ -26,9 +26,19 @@ export function useJoin(role, tableId) {
       socket.off('connect', join)
       socket.off('disconnect', lost)
     }
-  }, [role, tableId])
+  }, [role, tableId, deviceId])
 
   return connected
+}
+
+// Un identifiant propre à ce téléphone, gardé dans le navigateur.
+export function getDeviceId() {
+  let id = localStorage.getItem('comclick-device')
+  if (!id) {
+    id = Math.random().toString(36).slice(2)
+    localStorage.setItem('comclick-device', id)
+  }
+  return id
 }
 
 // Écoute un message du serveur tant que la page est affichée.
