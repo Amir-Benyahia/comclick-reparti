@@ -14,7 +14,7 @@ const SEATS = 4
 // Une table : { id, open, clients, items }
 // Un client : { seat, validated, clientId (téléphone lié ou null), diets, allergies, editing }
 // Un plat :   { id, dishId, seat, status, mods, request }
-//   status  : choisi -> envoye -> pret -> servi
+//   status  : choisi -> envoye -> preparation -> pret -> servi
 //   request : la demande de modification { mods, status, deadline }
 //             status : en_attente, acceptee, refusee, expiree
 const tables = {}
@@ -222,9 +222,24 @@ io.on('connection', (socket) => {
     sendTable(tableId)
   })
 
+  // Le chef commence la préparation de tous les plats envoyés de cette table.
+  socket.on(MSG.TICKET_START, ({ tableId }) => {
+    const table = tables[tableId]
+    if (!table?.open) return
+    let changed = false
+    for (const item of table.items) {
+      if (item.status === 'envoye' && !isPending(item)) {
+        item.status = 'preparation'
+        changed = true
+      }
+    }
+    if (changed) sendTable(tableId)
+  })
+
   socket.on(MSG.TICKET_READY, ({ tableId, itemId }) => {
     const item = tables[tableId]?.items.find((i) => i.id === itemId)
-    if (!item) return
+    // Le simulateur historique peut aussi terminer directement un plat envoyé.
+    if (!item || !['envoye', 'preparation'].includes(item.status)) return
     item.status = 'pret'
     sendTable(tableId)
     io.to('serveur').emit(MSG.DISH_READY, { tableId, dishName: findDish(item.dishId).name })
