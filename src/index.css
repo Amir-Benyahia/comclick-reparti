@@ -130,7 +130,7 @@ button.send { font-size: 1.1rem; padding: 14px 28px; border-radius: 40px; animat
 .sent-msg { color: var(--green); font-weight: 700; font-size: 1.1rem; }
 
 /* ---------- Cuisine ---------- */
-/* Étape 1 : affichage des bons, sans action sur les commandes. */
+/* Bons de cuisine et validation collective par table. */
 .cuisine-page { max-width: 1180px; padding-top: 32px; }
 .cuisine-page .badge { top: 24px; right: 20px; }
 .cuisine-header { margin-bottom: 28px; padding-right: 140px; }
@@ -159,3 +159,7 @@ button.send { font-size: 1.1rem; padding: 14px 28px; border-radius: 40px; animat
   .cuisine-header { padding-right: 0; padding-top: 34px; }
   .cuisine-ticket-head { align-items: flex-start; }
 }
+
+.cuisine-ticket-footer { border-top: 1px solid #484238; padding: 4px 18px 18px; }
+.cuisine-ticket-footer button { min-height: 48px; }
+.cuisine-ticket-footer .ok-text { margin: 14px 0 0; font-size: 0.88rem; }
