@@ -327,3 +327,6 @@ button:disabled { opacity: .48; }
 @media (prefers-reduced-motion: reduce) {
   *,*::before,*::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Statut partagé pour les plats en cours de préparation. */
+.status.preparation { background: #e6ead4; color: #566b36; border: 1px solid #c6d0aa; }
