@@ -36,7 +36,7 @@ export default function Cuisine() {
       <header className="cuisine-header">
         <div className="cuisine-logo">COMCLICK</div>
         <p className="muted small">CUISINE / BONS DE COMMANDE</p>
-        <h1>Service en cours</h1>
+        <h1>Le service <em>en cuisine.</em></h1>
         <p className="muted small">{activeTables.length} table(s) avec des commandes</p>
       </header>
 
