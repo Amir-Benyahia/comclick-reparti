@@ -1,7 +1,7 @@
-// Étape 1 : lecture des bons de cuisine.
-// Les actions sur les plats seront ajoutées dans les étapes suivantes.
+// Étape 2 : un bouton « Commande prête » par table.
+// Le serveur conserve l'état de chaque plat et prévient le serveur de salle.
 import { useState } from 'react'
-import { useJoin, useMessage } from '../socket.js'
+import { socket, useJoin, useMessage } from '../socket.js'
 import { MSG } from '../../shared/messages.js'
 import { findDish, modsSummary } from '../../shared/menu.js'
 import ConnectionBadge from '../components/ConnectionBadge.jsx'
@@ -11,6 +11,15 @@ export default function Cuisine() {
   const connected = useJoin('cuisine')
   const [tables, setTables] = useState([])
   useMessage(MSG.ALL_STATE, setTables)
+
+  function markTableReady(table) {
+    // Le bouton agit uniquement sur les plats envoyés, pas sur ceux déjà prêts.
+    for (const item of table.items) {
+      if (item.status === 'envoye' && item.request?.status !== 'en_attente') {
+        socket.emit(MSG.TICKET_READY, { tableId: table.id, itemId: item.id })
+      }
+    }
+  }
 
   const activeTables = tables
     .map((table) => ({
@@ -78,6 +87,21 @@ export default function Cuisine() {
                   )
                 })}
             </ul>
+            <footer className="cuisine-ticket-footer">
+              {table.items.some((item) => item.status === 'envoye' && item.request?.status !== 'en_attente') ? (
+                <button
+                  className="wide"
+                  disabled={!connected}
+                  onClick={() => markTableReady(table)}
+                >
+                  Commande prête
+                </button>
+              ) : (
+                <p className="ok-text">{table.items.every((item) => item.status === 'pret')
+                  ? 'Tous les plats sont prêts'
+                  : 'Aucun plat à valider pour le moment'}</p>
+              )}
+            </footer>
           </section>
         ))}
       </div>
