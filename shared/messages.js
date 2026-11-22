@@ -19,6 +19,7 @@ export const MSG = {
   EDIT_REQUEST: 'edit:request', // le téléphone envoie la modification : { tableId, clientId, itemId, mods }
   EDIT_ANSWER: 'edit:answer', // la cuisine accepte ou refuse : { tableId, itemId, accepted }
 
+  TICKET_START: 'ticket:start', // la cuisine commence les plats envoyés d'une table : { tableId }
   TICKET_READY: 'ticket:ready', // la cuisine a fini un plat : { tableId, itemId }
   DISH_SERVED: 'dish:served', // le serveur a apporté le plat : { tableId, itemId }
 
