@@ -65,7 +65,7 @@ export default function Mobile() {
   return (
     <div className="page mobile">
       <ConnectionBadge connected={connected} />
-      <h1>Table {tableId}{seat ? ` · place ${seat}` : ''}</h1>
+      <header className="mobile-brand-head"><a className="mobile-wordmark" href="/">COMCLICK<span>RESTAURANT</span></a><p className="eyebrow">VOTRE EXPÉRIENCE PRIVÉE</p><h1>À votre <em>table.</em></h1><p className="muted">Table {tableId}{seat ? ` · place ${seat}` : ''}</p></header>
 
       {table && !table.open && <p className="muted">La table n'est pas encore ouverte.</p>}
       {error && <p className="error">{error}</p>}
