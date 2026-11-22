@@ -1,5 +1,4 @@
-// Étape 2 : un bouton « Commande prête » par table.
-// Le serveur conserve l'état de chaque plat et prévient le serveur de salle.
+// Suivi d'une commande par table : reçue, en préparation, puis prête.
 import { useState } from 'react'
 import { socket, useJoin, useMessage } from '../socket.js'
 import { MSG } from '../../shared/messages.js'
@@ -12,10 +11,14 @@ export default function Cuisine() {
   const [tables, setTables] = useState([])
   useMessage(MSG.ALL_STATE, setTables)
 
+  function startPreparation(tableId) {
+    socket.emit(MSG.TICKET_START, { tableId })
+  }
+
   function markTableReady(table) {
-    // Le bouton agit uniquement sur les plats envoyés, pas sur ceux déjà prêts.
+    // Un seul bouton pour toute la table, avec un message par plat en préparation.
     for (const item of table.items) {
-      if (item.status === 'envoye' && item.request?.status !== 'en_attente') {
+      if (item.status === 'preparation') {
         socket.emit(MSG.TICKET_READY, { tableId: table.id, itemId: item.id })
       }
     }
@@ -25,7 +28,7 @@ export default function Cuisine() {
     .map((table) => ({
       ...table,
       items: (table.items ?? []).filter((item) =>
-        item.status === 'envoye' || item.status === 'pret'
+        item.status === 'envoye' || item.status === 'preparation' || item.status === 'pret'
       ),
     }))
     .filter((table) => table.items.length > 0)
@@ -92,13 +95,21 @@ export default function Cuisine() {
                 <button
                   className="wide"
                   disabled={!connected}
+                  onClick={() => startPreparation(table.id)}
+                >
+                  Commencer la préparation
+                </button>
+              ) : table.items.some((item) => item.status === 'preparation') ? (
+                <button
+                  className="wide"
+                  disabled={!connected}
                   onClick={() => markTableReady(table)}
                 >
                   Commande prête
                 </button>
               ) : (
                 <p className="ok-text">{table.items.every((item) => item.status === 'pret')
-                  ? 'Tous les plats sont prêts'
+                  ? 'Commande prête pour le service'
                   : 'Aucun plat à valider pour le moment'}</p>
               )}
             </footer>
